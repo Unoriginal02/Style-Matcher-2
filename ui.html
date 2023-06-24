@@ -1,0 +1,647 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/thomas-lowry/figma-plugin-ds/dist/figma-plugin-ds.css">
+<style>
+  body {
+    padding-top: 2rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    padding-bottom: 0;
+  }
+
+  .tab {
+    display: none;
+  }
+
+  .tab.active {
+    display: block;
+  }
+
+  .tab-button {
+    text-align: center;
+    background-color: var(--white);
+    color: #ADB5BD;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    cursor: pointer;
+    border: 2px solid #DEE1E5;
+    font-size: var(--font-size-xlarge);
+    font-weight: var(--font-weight-medium);
+    padding: 16px;
+    border-radius: 4px;
+    opacity: 1;
+  }
+
+  .tab-button.active {
+    background-color: var(--blue);
+    color: var(--white);
+    border-color: var(--blue);
+  }
+
+  .content {
+    margin-top: 20px;
+  }
+
+  div {
+    margin-bottom: .5rem;
+  }
+
+  .grouped {
+    margin-bottom: .5rem;
+  }
+
+  input {
+    display: block;
+  }
+
+  label {
+    font-size: var(--font-size-xsmall);
+  }
+
+  /* hide the default radio buttons */
+  input[type="radio"] {
+    display: none;
+  }
+
+  .blue {
+    background: #026CD1;
+  }
+
+  .green {
+    background: #4CAF50
+  }
+
+  .teal {
+    background: #269DD9;
+  }
+
+  .red {
+    background: #E94949;
+  }
+
+  .purple {
+    background: #7B61FF;
+  }
+
+  .orange {
+    background: #FF991C;
+  }
+
+  .dark-mode {
+    background: #DEE1E5;
+  }
+
+
+  .flex-row {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    justify-content: flex-start;
+    align-items: end;
+  }
+
+  .flex-container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .flex-item {
+    flex: 1;
+  }
+
+  .flex-item:not(:last-child) {
+    margin-right: 10px;
+  }
+
+  .input__field {
+    font-size: var(--font-size-small);
+    border-color: #DEE1E5;
+    width: 100%;
+  }
+
+  .button--primary-j {
+    background-color: var(--blue);
+    color: var(--white);
+  }
+
+  .button--secondary-j {
+    background-color: #EAECEE;
+    color: var(--black) !important;
+  }
+
+  .button-j {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    align-items: center;
+    border-radius: 4px;
+    color: var(--white);
+    flex-shrink: 0;
+    font-family: var(--font-stack);
+    font-size: var(--font-size-xsmall);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--font-letter-spacing-neg-small);
+    line-height: var(--font-line-height);
+    height: var(--size-large);
+    padding: 0 var(--size-xsmall) 0 var(--size-xsmall);
+    text-decoration: none;
+    outline: none;
+    border: 2px solid transparent;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  .button--primary-j:hover {
+    background: #026CD1;
+    cursor: pointer;
+  }
+
+  .button--secondary-j:hover {
+    background-color: #DEE1E5;
+  }
+
+  .inputswithLabels {
+    margin-top: 8px;
+  }
+
+  table {
+    display: flex;
+    flex-direction: column;
+    font-size: var(--font-size-small);
+  }
+
+  tr {
+    display: flex;
+    flex-direction: row;
+  }
+
+  td {
+    display: flex;
+    flex: 1;
+    align-items: center;
+  }
+
+  table tr:first-child {
+    padding-top: 0px;
+  }
+
+  .border-top {
+    padding-top: 16px;
+  }
+
+  tr {
+    border-bottom: 1px solid #DEE1E5;
+  }
+
+  .dataCell {
+    padding-left: 8px;
+    padding-right: 8px;
+    margin-right: 16px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    transition: all 0.174s ease;
+  }
+
+  .dataCell:hover {
+    color: #026CD1;
+    background-color: #F6F6F7;
+    cursor: pointer;
+    padding-left: 16px;
+  }
+
+  .nameCell {
+    font-weight: 700;
+  }
+
+  .isChildren {
+    color: #ADB5BD;
+    font-style: oblique;
+    padding-left: 24px;
+    padding-right: 8px;
+    margin-right: 16px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    transition: all 0.174s ease;
+  }
+
+  .isChildren:hover {
+    color: #026CD1;
+    background-color: #F6F6F7;
+    cursor: pointer;
+    padding-left: 32px;
+  }
+
+  .hiddenLabel {
+    display: none;
+  }
+
+  .spacer {
+    margin-bottom: 32px;
+  }
+
+  .mini {
+    max-width: 12%;
+  }
+
+  .mini-icon {
+    max-width: 28px;
+    margin-right: 8px;
+  }
+
+  .icon-button,
+  .icon {
+    margin-bottom: 0 !important;
+  }
+
+  .redStatus {
+    color: red;
+  }
+
+  .greenStatus {
+    color: green;
+  }
+
+  .color-dot {
+    max-width: 20px;
+  }
+
+  .le-dot {
+    margin-bottom: 0;
+  }
+</style>
+<h2>🦄 Style Matcher 2</h2>
+<div class="spacer flex-row">
+  <button id="get-styles" class="button button--primary-j">Get Styles</button>
+  <button id="refresh-button" class="button button--secondary-j">Refresh</button>
+  <button id="ungroup-button" class="button button--secondary-j">Ungroup</button>
+  <button id="get-all-styles" class="button button--secondary-j">Get All Styles</button>
+</div>
+
+<div class="spacer">
+  <label for="styles-table" class="hiddenLabel" id="labelStyles">Color Styles</label>
+  <table id="styles-table" class="inputswithLabels">
+    <tbody id="styles-tbody"></tbody>
+  </table>
+</div>
+
+<div class="spacer">
+  <label for="no-styles-table" class="hiddenLabel" id="labelNoStyles">Unstyled Colors</label>
+  <table id="no-styles-table" class="inputswithLabels">
+    <tbody id="no-styles-tbody"></tbody>
+  </table>
+</div>
+
+<div class="spacer">
+  <label for="fonts-table" class="hiddenLabel" id="labelFonts">Font Styles</label>
+  <table id="fonts-table" class="inputswithLabels">
+    <tbody id="fonts-tbody"></tbody>
+  </table>
+</div>
+
+<div class="spacer">
+  <div>
+    <label for="no-fonts-table" class="hiddenLabel" id="labelNoFonts">Unstyled Fonts</label>
+    <table id="no-fonts-table" class="inputswithLabels">
+      <tbody id="no-fonts-tbody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    console.clear();
+    const getStylesButton = document.getElementById('get-styles');
+    const getAllStylesButton = document.getElementById('get-all-styles');
+    const unGroup = document.getElementById('ungroup-button');
+    const refresh = document.getElementById('refresh-button');
+
+    getStylesButton.onclick = () => {
+      parent.postMessage({ pluginMessage: { type: 'getStyles' } }, '*');
+    };
+
+    getAllStylesButton.onclick = () => {
+      parent.postMessage({ pluginMessage: { type: 'getAllStyles' } }, '*');
+    };
+
+    refresh.onclick = () => {
+      parent.postMessage({ pluginMessage: { type: 'refresh' } }, '*');
+    };
+
+    // Function to update label visibility
+    function updateLabelVisibility(targetLabel, targetTable) {
+      const label = document.getElementById(targetLabel);
+      const tbody = document.getElementById(targetTable);
+      if (tbody.rows.length > 0) {
+        label.classList.remove('hiddenLabel');
+      } else {
+        label.classList.add('hiddenLabel');
+      }
+    }
+
+    // Function to highlight row
+    function highlightRow(rowNameCell) {
+      // Clear existing highlighted rows
+      const highlightedRowNames = document.querySelectorAll(".styleRowName");
+      highlightedRowNames.forEach((highlightedRowName) => {
+        highlightedRowName.style.color = "inherit";
+      });
+
+      // Change the text color of the clicked row's name cell to blue
+      rowNameCell.style.color = "#026CD1";
+    }
+
+
+    window.addEventListener("message", (event) => {
+      const pluginMessage = event.data.pluginMessage;
+      const messageType = pluginMessage.type;
+
+      if (
+        messageType === "colorStyles" ||
+        messageType === "fontStyles" ||
+        messageType === "noColorStyles" ||
+        messageType === "noFontStyles" ||
+        messageType === "allColorStyles" ||
+        messageType === "allNoColorStyles" ||
+        messageType === "allFontStyles" ||
+        messageType === "allNoFontStyles"
+      ) {
+        // console.log(pluginMessage);
+        const styles = pluginMessage.styles;
+        let targetTable;
+
+        switch (messageType) {
+          case "colorStyles":
+            targetTable = "styles-tbody";
+            break;
+          case "fontStyles":
+            targetTable = "fonts-tbody";
+            break;
+          case "noColorStyles":
+            targetTable = "no-styles-tbody";
+            break;
+          case "noFontStyles":
+            targetTable = "no-fonts-tbody";
+            break;
+          case "allColorStyles":
+            targetTable = "styles-tbody";
+            break;
+          case "allFontStyles":
+            targetTable = "fonts-tbody";
+            break;
+          case "allNoColorStyles":
+            targetTable = "no-styles-tbody";
+            break;
+          case "allNoFontStyles":
+            targetTable = "no-fonts-tbody";
+            break;
+        }
+
+        const tbody = document.getElementById(targetTable);
+
+        // Clear previous table content
+        tbody.innerHTML = "";
+
+        // Sort the styles array based on the styleType property
+        styles.sort((a, b) => {
+          // Prioritize fill styles over stroke styles
+          if (a.styleType === 'fill' && b.styleType === 'stroke') {
+            return -1;
+          }
+          if (a.styleType === 'stroke' && b.styleType === 'fill') {
+            return 1;
+          }
+          // If styleType is the same, sort alphabetically by name
+          return b.name.localeCompare(a.name);
+        });
+
+        // Add table rows with the style name and the "locate" button
+        styles.forEach((style) => {
+          const tr = document.createElement("tr");
+
+          function getColorBrightness(hexColor) {
+            const rgb = parseInt(hexColor.slice(1), 16);
+            const r = (rgb >> 16) & 0xff;
+            const g = (rgb >> 8) & 0xff;
+            const b = (rgb >> 0) & 0xff;
+            return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+          }
+
+          // Only create colorCircle cells for colorStyles and noColorStyles
+          if (messageType === "colorStyles" || messageType === "noColorStyles" || messageType === "allColorStyles") {
+            function getColorBrightness(hexColor) {
+              const rgb = parseInt(hexColor.slice(1), 16);
+              const r = (rgb >> 16) & 0xff;
+              const g = (rgb >> 8) & 0xff;
+              const b = (rgb >> 0) & 0xff;
+              return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+            }
+
+            // Color circle cell
+            const colorCircleTd = document.createElement("td");
+            const colorCircle = document.createElement("div");
+            colorCircleTd.classList.add('color-dot');
+            colorCircle.classList.add('le-dot');
+            colorCircle.style.width = "16px";
+            colorCircle.style.height = "16px";
+            colorCircle.style.borderRadius = "50%";
+            colorCircle.style.backgroundColor = style.hexColor;
+
+            // Add a light gray border if the color is too light or clear
+            const brightness = getColorBrightness(style.hexColor);
+            if (brightness > 200) {
+              colorCircle.style.border = "1px solid #ccc";
+            }
+
+            colorCircleTd.appendChild(colorCircle);
+            tr.appendChild(colorCircleTd);
+          }
+
+          // Name cell
+          const nameTd = document.createElement("td");
+          // Calculate the number of nodes for the current style
+          const nodeCount = style.nodes.length;
+          nameTd.innerText = `${style.name}    (${nodeCount})`;
+          // Assign an ID to the nameTd element
+          nameTd.id = "nameTd-" + encodeURIComponent(style.name);
+          nameTd.classList.add("dataCell", "nameCell", "styleRowName");
+          tr.appendChild(nameTd);
+
+          // New cell to display "Fill" or "Stroke"
+          if (style.styleType === 'fill') {
+            const remoteStyleTypeTd = document.createElement("td");
+            remoteStyleTypeTd.innerText = "Fill";
+            remoteStyleTypeTd.classList.add("mini", "remoteStatusCell");
+
+            tr.appendChild(remoteStyleTypeTd);
+          } else if (style.styleType === 'stroke') {
+            const remoteStyleTypeTd = document.createElement("td");
+            remoteStyleTypeTd.innerText = "Stroke";
+            remoteStyleTypeTd.classList.add("mini", "remoteStatusCell");
+
+            tr.appendChild(remoteStyleTypeTd);
+          }
+
+          // New cell to display "Remote" or "Local"
+          if (style.isRemote !== undefined) {
+            const remoteStatusTd = document.createElement("td");
+            remoteStatusTd.innerText = style.isRemote ? "Remote" : "Local";
+            remoteStatusTd.classList.add("mini", "remoteStatusCell");
+
+            // Add .red or .green class based on the remote status
+            if (style.isRemote) {
+              remoteStatusTd.classList.add("redStatus");
+            } else {
+              remoteStatusTd.classList.add("greenStatus");
+            }
+
+            tr.appendChild(remoteStatusTd);
+          } else {
+            const remoteStatusTd = document.createElement("td");
+            remoteStatusTd.innerText = "-";
+            remoteStatusTd.classList.add("mini", "remoteStatusCell");
+
+            tr.appendChild(remoteStatusTd);
+          }
+
+          // Locate button cell
+          const locateButtonCell = document.createElement("td");
+          locateButtonCell.classList.add('mini-icon');
+          const locateButton = document.createElement("div");
+          const locateButtonIcon = document.createElement('div');
+
+          locateButton.appendChild(locateButtonIcon);
+          locateButton.classList.add('icon-button');
+          locateButton.setAttribute('title', 'Locate all objects');
+          locateButtonIcon.classList.add('icon', 'icon--search-large');
+
+          locateButton.addEventListener("click", () => {
+            const messageTypeToLocate =
+              messageType === "colorStyles" || messageType === "noColorStyles"
+                ? "locateColorStyle"
+                : "locateFontStyle";
+            parent.postMessage({ pluginMessage: { type: messageTypeToLocate, nodes: style.nodes } }, "*");
+            // Call highlightRow with the current row (tr)
+            highlightRow(nameTd);
+          });
+
+          locateButtonCell.appendChild(locateButton);
+          tr.appendChild(locateButtonCell);
+
+          // LocateNext button cell
+          const locateNextButtonCell = document.createElement("td");
+          locateNextButtonCell.classList.add('mini-icon');
+          const locateNextButton = document.createElement("div");
+          const locateNextButtonIcon = document.createElement('div');
+
+          locateNextButton.appendChild(locateNextButtonIcon);
+          locateNextButton.classList.add('icon-button');
+          locateNextButton.setAttribute('title', 'Target single object');
+          locateNextButtonIcon.classList.add('icon', 'icon--resize-to-fit');
+
+          locateNextButton.addEventListener("click", () => {
+            parent.postMessage({ pluginMessage: { type: 'locateNextNode', nodes: style.nodes } }, '*');
+          });
+
+          locateNextButtonCell.appendChild(locateNextButton);
+          tr.appendChild(locateNextButtonCell);
+
+          // Refresh button cell
+          const refreshButtonCell = document.createElement("td");
+          refreshButtonCell.classList.add('mini-icon');
+          const refreshButton = document.createElement("div");
+          const refreshButtonIcon = document.createElement('div');
+
+          refreshButton.appendChild(refreshButtonIcon);
+          refreshButton.classList.add('icon-button');
+          
+          refreshButtonIcon.classList.add('icon', 'icon--reverse');
+          refreshButtonIcon.setAttribute('title', 'Refresh');
+          refreshButton.addEventListener("click", () => {
+            parent.postMessage({ pluginMessage: { type: 'refresh' } }, '*');
+          });
+
+          refreshButtonCell.appendChild(refreshButton);
+          tr.appendChild(refreshButtonCell);
+
+          // Execute Button
+          function applySelectedColorStyle(styleNodes) {
+            parent.postMessage({ pluginMessage: { type: 'applySelectedColorStyle', nodes: styleNodes, styleType: style.styleType } }, '*');
+          }
+          const executeButtonCell = document.createElement("td");
+          executeButtonCell.classList.add('mini-icon');
+          const executeButton = document.createElement("div");
+          const executeButtonIcon = document.createElement('div');
+
+          executeButton.appendChild(executeButtonIcon);
+          executeButton.classList.add('icon-button');
+          executeButton.setAttribute('title', 'Apply selected color to all objects');
+          executeButtonIcon.classList.add('icon', 'icon--play');
+
+          executeButton.addEventListener("click", () => {
+            applySelectedColorStyle(style.nodes);
+          });
+
+          executeButtonCell.appendChild(executeButton);
+          tr.appendChild(executeButtonCell);
+
+          tbody.appendChild(tr);
+
+          if (messageType === 'colorStyles') {
+            // Send nodes back to code.ts
+            const styles = pluginMessage.styles;
+            const ids = "nameTd-" + encodeURIComponent(style.name);;
+            // console.log('Preparing to send styleNodes message:', style.name, style.nodes);
+            parent.postMessage({ pluginMessage: { type: 'styleNodes', nodes: style.nodes, ids } }, '*');
+            // console.log('Sent styleNodes message:', style.name);
+          }
+        });
+
+        // Call updateLabelVisibility after populating the table body
+        switch (messageType) {
+          case "colorStyles":
+            updateLabelVisibility('labelStyles', 'styles-tbody');
+            break;
+          case "fontStyles":
+            updateLabelVisibility('labelFonts', 'fonts-tbody');
+            break;
+          case "noColorStyles":
+            updateLabelVisibility('labelNoStyles', 'no-styles-tbody');
+            break;
+          case "noFontStyles":
+            updateLabelVisibility('labelNoFonts', 'no-fonts-tbody');
+            break;
+        }
+      }
+
+      // Add this block inside the existing event listener
+      if (messageType === "parentingResults") {
+        const idsString = pluginMessage.ids; // assuming the ids are received as a single string
+        const ids = idsString.split(','); // replace ',' with the character used to separate the IDs
+        const parentingResults = pluginMessage.parentTotal;
+        // console.log('Received parentingResults:', parentingResults);
+
+        // Iterate through the ids array
+        for (let i = 0; i < ids.length; i++) {
+          // Check if the parentingResults is true
+          if (parentingResults) {
+            // Locate the nameTd cell using the id
+            const nameTd = document.getElementById(ids[i]);
+
+            // Log the id
+            // console.log('Located id:', ids[i]);
+
+            // Set the inner text to "boobs and booties"
+            if (nameTd) {
+              nameTd.innerHTML += " *";
+            }
+          }
+        }
+      }
+
+    });
+
+    unGroup.addEventListener("click", () => {
+      parent.postMessage({ pluginMessage: { type: "ungroup" } }, "*");
+    });
+
+  </script>
