@@ -314,122 +314,143 @@
       <tbody id="no-fonts-tbody"></tbody>
     </table>
   </div>
+</div>
 
-  <script>
-    console.clear();
-    const getStylesButton = document.getElementById('get-styles');
-    // const getAllStylesButton = document.getElementById('get-all-styles');
-    const unGroup = document.getElementById('ungroup-button');
-    const refresh = document.getElementById('refresh-button');
+<script>
+  console.clear();
 
-    getStylesButton.onclick = () => {
-      parent.postMessage({ pluginMessage: { type: 'getStyles' } }, '*');
-    };
+  function copyToClipboard(value) {
+    const temp = document.createElement("textarea");
 
-    // getAllStylesButton.onclick = () => {
-    //   parent.postMessage({ pluginMessage: { type: 'getAllStyles' } }, '*');
-    // };
+    // Remove the last parentheses and the number inside them, accounting for a space before the parentheses
+    value = value.replace(/\s\(\d+\)$/, '');
 
-    refresh.onclick = () => {
-      parent.postMessage({ pluginMessage: { type: 'refresh' } }, '*');
-    };
+    temp.value = value;
+    document.body.appendChild(temp);
+    temp.select();
+    document.execCommand("copy");
+    document.body.removeChild(temp);
+    parent.postMessage({ pluginMessage: { type: 'notify' } }, '*');
+  }
 
-    // Function to update label visibility
-    function updateLabelVisibility(targetLabel, targetTable) {
-      const label = document.getElementById(targetLabel);
-      const tbody = document.getElementById(targetTable);
-      if (tbody.rows.length > 0) {
-        label.classList.remove('hiddenLabel');
-      } else {
-        label.classList.add('hiddenLabel');
-      }
+  const getStylesButton = document.getElementById('get-styles');
+  const unGroup = document.getElementById('ungroup-button');
+  const refresh = document.getElementById('refresh-button');
+
+  getStylesButton.onclick = () => {
+    parent.postMessage({ pluginMessage: { type: 'getStyles' } }, '*');
+  };
+
+  refresh.onclick = () => {
+    parent.postMessage({ pluginMessage: { type: 'refresh' } }, '*');
+  };
+
+  // Function to update label visibility
+  function updateLabelVisibility(targetLabel, targetTable) {
+    const label = document.getElementById(targetLabel);
+    const tbody = document.getElementById(targetTable);
+    if (tbody.rows.length > 0) {
+      label.classList.remove('hiddenLabel');
+    } else {
+      label.classList.add('hiddenLabel');
     }
+  }
 
-    // Function to highlight row
-    function highlightRow(rowNameCell) {
-      // Clear existing highlighted rows
-      const highlightedRowNames = document.querySelectorAll(".styleRowName");
-      highlightedRowNames.forEach((highlightedRowName) => {
-        highlightedRowName.style.color = "inherit";
+  // Function to highlight row
+  function highlightRow(rowNameCell) {
+    // Clear existing highlighted rows
+    const highlightedRowNames = document.querySelectorAll(".styleRowName");
+    highlightedRowNames.forEach((highlightedRowName) => {
+      highlightedRowName.style.color = "inherit";
+    });
+
+    // Change the text color of the clicked row's name cell to blue
+    rowNameCell.style.color = "#026CD1";
+  }
+
+
+  window.addEventListener("message", (event) => {
+    const pluginMessage = event.data.pluginMessage;
+    const messageType = pluginMessage.type;
+
+    if (
+      messageType === "variables" ||
+      messageType === "colorStyles" ||
+      messageType === "fontStyles" ||
+      messageType === "noColorStyles" ||
+      messageType === "noFontStyles" ||
+      messageType === "allColorStyles" ||
+      messageType === "allNoColorStyles" ||
+      messageType === "allFontStyles" ||
+      messageType === "allNoFontStyles"
+    ) {
+      console.log("message:", pluginMessage);
+      const styles = pluginMessage.styles || pluginMessage.variables
+      let targetTable;
+
+      switch (messageType) {
+        case "variables":
+          targetTable = "variables-tbody";
+          break;
+        case "colorStyles":
+          targetTable = "styles-tbody";
+          break;
+        case "fontStyles":
+          targetTable = "fonts-tbody";
+          break;
+        case "noColorStyles":
+          targetTable = "no-styles-tbody";
+          break;
+        case "noFontStyles":
+          targetTable = "no-fonts-tbody";
+          break;
+        case "allColorStyles":
+          targetTable = "styles-tbody";
+          break;
+        case "allFontStyles":
+          targetTable = "fonts-tbody";
+          break;
+        case "allNoColorStyles":
+          targetTable = "no-styles-tbody";
+          break;
+        case "allNoFontStyles":
+          targetTable = "no-fonts-tbody";
+          break;
+      }
+
+      const tbody = document.getElementById(targetTable);
+      console.log("tbody:", tbody);
+
+      // Clear previous table content
+      tbody.innerHTML = "";
+
+      // Sort the styles array based on the styleType property
+      styles.sort((a, b) => {
+        // Prioritize fill styles over stroke styles
+        if (a.styleType === 'fill' && b.styleType === 'stroke') {
+          return -1;
+        }
+        if (a.styleType === 'stroke' && b.styleType === 'fill') {
+          return 1;
+        }
+        // If styleType is the same, sort alphabetically by name
+        return b.name.localeCompare(a.name);
       });
 
-      // Change the text color of the clicked row's name cell to blue
-      rowNameCell.style.color = "#026CD1";
-    }
+      // Add table rows with the style name and the "locate" button
+      styles.forEach((style) => {
+        const tr = document.createElement("tr");
 
-
-    window.addEventListener("message", (event) => {
-      const pluginMessage = event.data.pluginMessage;
-      const messageType = pluginMessage.type;
-
-      if (
-        messageType === "variables" ||
-        messageType === "colorStyles" ||
-        messageType === "fontStyles" ||
-        messageType === "noColorStyles" ||
-        messageType === "noFontStyles" ||
-        messageType === "allColorStyles" ||
-        messageType === "allNoColorStyles" ||
-        messageType === "allFontStyles" ||
-        messageType === "allNoFontStyles"
-      ) {
-        console.log("message:",pluginMessage);
-        const styles = pluginMessage.styles || pluginMessage.variables
-        let targetTable;
-
-        switch (messageType) {
-          case "variables":
-            targetTable = "variables-tbody";
-            break;
-          case "colorStyles":
-            targetTable = "styles-tbody";
-            break;
-          case "fontStyles":
-            targetTable = "fonts-tbody";
-            break;
-          case "noColorStyles":
-            targetTable = "no-styles-tbody";
-            break;
-          case "noFontStyles":
-            targetTable = "no-fonts-tbody";
-            break;
-          case "allColorStyles":
-            targetTable = "styles-tbody";
-            break;
-          case "allFontStyles":
-            targetTable = "fonts-tbody";
-            break;
-          case "allNoColorStyles":
-            targetTable = "no-styles-tbody";
-            break;
-          case "allNoFontStyles":
-            targetTable = "no-fonts-tbody";
-            break;
+        function getColorBrightness(hexColor) {
+          const rgb = parseInt(hexColor.slice(1), 16);
+          const r = (rgb >> 16) & 0xff;
+          const g = (rgb >> 8) & 0xff;
+          const b = (rgb >> 0) & 0xff;
+          return 0.2126 * r + 0.7152 * g + 0.0722 * b;
         }
 
-        const tbody = document.getElementById(targetTable);
-        console.log("tbody:",tbody);
-
-        // Clear previous table content
-        tbody.innerHTML = "";
-
-        // Sort the styles array based on the styleType property
-        styles.sort((a, b) => {
-          // Prioritize fill styles over stroke styles
-          if (a.styleType === 'fill' && b.styleType === 'stroke') {
-            return -1;
-          }
-          if (a.styleType === 'stroke' && b.styleType === 'fill') {
-            return 1;
-          }
-          // If styleType is the same, sort alphabetically by name
-          return b.name.localeCompare(a.name);
-        });
-
-        // Add table rows with the style name and the "locate" button
-        styles.forEach((style) => {
-          const tr = document.createElement("tr");
-
+        // Only create colorCircle cells for colorStyles and noColorStyles and variables
+        if (messageType === "colorStyles" || messageType === "noColorStyles" || messageType === "variables" || messageType === "allColorStyles") {
           function getColorBrightness(hexColor) {
             const rgb = parseInt(hexColor.slice(1), 16);
             const r = (rgb >> 16) & 0xff;
@@ -438,226 +459,221 @@
             return 0.2126 * r + 0.7152 * g + 0.0722 * b;
           }
 
-          // Only create colorCircle cells for colorStyles and noColorStyles and variables
-          if (messageType === "colorStyles" || messageType === "noColorStyles" || messageType === "variables" || messageType === "allColorStyles") {
-            function getColorBrightness(hexColor) {
-              const rgb = parseInt(hexColor.slice(1), 16);
-              const r = (rgb >> 16) & 0xff;
-              const g = (rgb >> 8) & 0xff;
-              const b = (rgb >> 0) & 0xff;
-              return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-            }
+          // Color circle cell
+          const colorCircleTd = document.createElement("td");
+          const colorCircle = document.createElement("div");
+          colorCircleTd.classList.add('color-dot');
+          colorCircle.classList.add('le-dot');
+          colorCircle.style.width = "16px";
+          colorCircle.style.height = "16px";
+          colorCircle.style.borderRadius = messageType === "variables" ? "0" : "50%";
+          colorCircle.style.backgroundColor = style.hexColor;
 
-            // Color circle cell
-            const colorCircleTd = document.createElement("td");
-            const colorCircle = document.createElement("div");
-            colorCircleTd.classList.add('color-dot');
-            colorCircle.classList.add('le-dot');
-            colorCircle.style.width = "16px";
-            colorCircle.style.height = "16px";
-            colorCircle.style.borderRadius = messageType === "variables" ? "0" : "50%";
-            colorCircle.style.backgroundColor = style.hexColor;
-
-            // Add a light gray border if the color is too light or clear
-            const brightness = getColorBrightness(style.hexColor);
-            if (brightness > 200) {
-              colorCircle.style.border = "1px solid #ccc";
-            }
-
-            colorCircleTd.appendChild(colorCircle);
-            tr.appendChild(colorCircleTd);
+          // Add a light gray border if the color is too light or clear
+          const brightness = getColorBrightness(style.hexColor);
+          if (brightness > 200) {
+            colorCircle.style.border = "1px solid #ccc";
           }
 
-          // Name cell
-          const nameTd = document.createElement("td");
-          // Calculate the number of nodes for the current style
-          const nodeCount = style.nodes.length;
-          nameTd.innerText = `${style.name}    (${nodeCount})`;
-          // Assign an ID to the nameTd element
-          nameTd.id = "nameTd-" + encodeURIComponent(style.name);
-          nameTd.classList.add("dataCell", "nameCell", "styleRowName");
-          tr.appendChild(nameTd);
+          colorCircleTd.appendChild(colorCircle);
+          tr.appendChild(colorCircleTd);
+        }
 
-          // New cell to display "Fill" or "Stroke"
-          if (style.styleType === 'fill') {
-            const remoteStyleTypeTd = document.createElement("td");
-            remoteStyleTypeTd.innerText = "Fill";
-            remoteStyleTypeTd.classList.add("mini", "remoteStatusCell");
+        // Name cell
+        const nameTd = document.createElement("td");
 
-            tr.appendChild(remoteStyleTypeTd);
-          } else if (style.styleType === 'stroke') {
-            const remoteStyleTypeTd = document.createElement("td");
-            remoteStyleTypeTd.innerText = "Stroke";
-            remoteStyleTypeTd.classList.add("mini", "remoteStatusCell");
-
-            tr.appendChild(remoteStyleTypeTd);
-          }
-
-          // New cell to display "Remote" or "Local"
-          if (style.isRemote !== undefined) {
-            const remoteStatusTd = document.createElement("td");
-            remoteStatusTd.innerText = style.isRemote ? "Remote" : "Local";
-            remoteStatusTd.classList.add("mini", "remoteStatusCell");
-
-            // Add .red or .green class based on the remote status
-            if (style.isRemote) {
-              remoteStatusTd.classList.add("redStatus");
-            } else {
-              remoteStatusTd.classList.add("greenStatus");
-            }
-
-            tr.appendChild(remoteStatusTd);
-          } else {
-            const remoteStatusTd = document.createElement("td");
-            remoteStatusTd.innerText = "-";
-            remoteStatusTd.classList.add("mini", "remoteStatusCell");
-
-            tr.appendChild(remoteStatusTd);
-          }
-
-          // Locate button cell
-          const locateButtonCell = document.createElement("td");
-          locateButtonCell.classList.add('mini-icon');
-          const locateButton = document.createElement("div");
-          const locateButtonIcon = document.createElement('div');
-
-          locateButton.appendChild(locateButtonIcon);
-          locateButton.classList.add('icon-button');
-          locateButton.setAttribute('title', 'Locate all objects');
-          locateButtonIcon.classList.add('icon', 'icon--search-large');
-
-          locateButton.addEventListener("click", () => {
-            const messageTypeToLocate =
-              messageType === "colorStyles" || messageType === "noColorStyles" || messageType === "variables"
-                ? "locateColorStyle"
-                : "locateFontStyle";
-            parent.postMessage({ pluginMessage: { type: messageTypeToLocate, nodes: style.nodes } }, "*");
-            // Call highlightRow with the current row (tr)
-            highlightRow(nameTd);
-          });
-
-          locateButtonCell.appendChild(locateButton);
-          tr.appendChild(locateButtonCell);
-
-          // LocateNext button cell
-          const locateNextButtonCell = document.createElement("td");
-          locateNextButtonCell.classList.add('mini-icon');
-          const locateNextButton = document.createElement("div");
-          const locateNextButtonIcon = document.createElement('div');
-
-          locateNextButton.appendChild(locateNextButtonIcon);
-          locateNextButton.classList.add('icon-button');
-          locateNextButton.setAttribute('title', 'Target single object');
-          locateNextButtonIcon.classList.add('icon', 'icon--resize-to-fit');
-
-          locateNextButton.addEventListener("click", () => {
-            parent.postMessage({ pluginMessage: { type: 'locateNextNode', nodes: style.nodes } }, '*');
-          });
-
-          locateNextButtonCell.appendChild(locateNextButton);
-          tr.appendChild(locateNextButtonCell);
-
-          // Refresh button cell
-          const refreshButtonCell = document.createElement("td");
-          refreshButtonCell.classList.add('mini-icon');
-          const refreshButton = document.createElement("div");
-          const refreshButtonIcon = document.createElement('div');
-
-          refreshButton.appendChild(refreshButtonIcon);
-          refreshButton.classList.add('icon-button');
-          
-          refreshButtonIcon.classList.add('icon', 'icon--reverse');
-          refreshButtonIcon.setAttribute('title', 'Refresh');
-          refreshButton.addEventListener("click", () => {
-            parent.postMessage({ pluginMessage: { type: 'refresh' } }, '*');
-          });
-
-          refreshButtonCell.appendChild(refreshButton);
-          tr.appendChild(refreshButtonCell);
-
-          // Execute Button
-          function applySelectedColorStyle(styleNodes) {
-            parent.postMessage({ pluginMessage: { type: 'applySelectedColorStyle', nodes: styleNodes, styleType: style.styleType } }, '*');
-          }
-          const executeButtonCell = document.createElement("td");
-          executeButtonCell.classList.add('mini-icon');
-          const executeButton = document.createElement("div");
-          const executeButtonIcon = document.createElement('div');
-
-          executeButton.appendChild(executeButtonIcon);
-          executeButton.classList.add('icon-button');
-          executeButton.setAttribute('title', 'Apply selected color to all objects');
-          executeButtonIcon.classList.add('icon', 'icon--play');
-
-          executeButton.addEventListener("click", () => {
-            applySelectedColorStyle(style.nodes);
-          });
-
-          executeButtonCell.appendChild(executeButton);
-          tr.appendChild(executeButtonCell);
-
-          tbody.appendChild(tr);
-
-          if (messageType === 'colorStyles') {
-            // Send nodes back to code.ts
-            const styles = pluginMessage.styles;
-            const ids = "nameTd-" + encodeURIComponent(style.name);;
-            // console.log('Preparing to send styleNodes message:', style.name, style.nodes);
-            parent.postMessage({ pluginMessage: { type: 'styleNodes', nodes: style.nodes, ids } }, '*');
-            // console.log('Sent styleNodes message:', style.name);
-          }
+        nameTd.addEventListener('click', () => {
+          copyToClipboard(nameTd.innerText);
         });
 
-        // Call updateLabelVisibility after populating the table body
-        switch (messageType) {
+        // Calculate the number of nodes for the current style
+        const nodeCount = style.nodes.length;
+        nameTd.innerText = `${style.name}    (${nodeCount})`;
+        // Assign an ID to the nameTd element
+        nameTd.id = "nameTd-" + encodeURIComponent(style.name);
+        nameTd.classList.add("dataCell", "nameCell", "styleRowName");
+        tr.appendChild(nameTd);
 
-          case "variables":
-            updateLabelVisibility('labelVariables', 'variables-tbody');
-            break;
-          case "colorStyles":
-            updateLabelVisibility('labelStyles', 'styles-tbody');
-            break;
-          case "fontStyles":
-            updateLabelVisibility('labelFonts', 'fonts-tbody');
-            break;
-          case "noColorStyles":
-            updateLabelVisibility('labelNoStyles', 'no-styles-tbody');
-            break;
-          case "noFontStyles":
-            updateLabelVisibility('labelNoFonts', 'no-fonts-tbody');
-            break;
+        // New cell to display "Fill" or "Stroke"
+        if (style.styleType === 'fill') {
+          const remoteStyleTypeTd = document.createElement("td");
+          remoteStyleTypeTd.innerText = "Fill";
+          remoteStyleTypeTd.classList.add("mini", "remoteStatusCell");
+
+          tr.appendChild(remoteStyleTypeTd);
+        } else if (style.styleType === 'stroke') {
+          const remoteStyleTypeTd = document.createElement("td");
+          remoteStyleTypeTd.innerText = "Stroke";
+          remoteStyleTypeTd.classList.add("mini", "remoteStatusCell");
+
+          tr.appendChild(remoteStyleTypeTd);
         }
+
+        // New cell to display "Remote" or "Local"
+        if (style.isRemote !== undefined) {
+          const remoteStatusTd = document.createElement("td");
+          remoteStatusTd.innerText = style.isRemote ? "Remote" : "Local";
+          remoteStatusTd.classList.add("mini", "remoteStatusCell");
+
+          // Add .red or .green class based on the remote status
+          if (style.isRemote) {
+            remoteStatusTd.classList.add("redStatus");
+          } else {
+            remoteStatusTd.classList.add("greenStatus");
+          }
+
+          tr.appendChild(remoteStatusTd);
+        } else {
+          const remoteStatusTd = document.createElement("td");
+          remoteStatusTd.innerText = "-";
+          remoteStatusTd.classList.add("mini", "remoteStatusCell");
+
+          tr.appendChild(remoteStatusTd);
+        }
+
+        // Locate button cell
+        const locateButtonCell = document.createElement("td");
+        locateButtonCell.classList.add('mini-icon');
+        const locateButton = document.createElement("div");
+        const locateButtonIcon = document.createElement('div');
+
+        locateButton.appendChild(locateButtonIcon);
+        locateButton.classList.add('icon-button');
+        locateButton.setAttribute('title', 'Locate all objects');
+        locateButtonIcon.classList.add('icon', 'icon--search-large');
+
+        locateButton.addEventListener("click", () => {
+          const messageTypeToLocate =
+            messageType === "colorStyles" || messageType === "noColorStyles" || messageType === "variables"
+              ? "locateColorStyle"
+              : "locateFontStyle";
+          parent.postMessage({ pluginMessage: { type: messageTypeToLocate, nodes: style.nodes } }, "*");
+          // Call highlightRow with the current row (tr)
+          highlightRow(nameTd);
+        });
+
+        locateButtonCell.appendChild(locateButton);
+        tr.appendChild(locateButtonCell);
+
+        // LocateNext button cell
+        const locateNextButtonCell = document.createElement("td");
+        locateNextButtonCell.classList.add('mini-icon');
+        const locateNextButton = document.createElement("div");
+        const locateNextButtonIcon = document.createElement('div');
+
+        locateNextButton.appendChild(locateNextButtonIcon);
+        locateNextButton.classList.add('icon-button');
+        locateNextButton.setAttribute('title', 'Target single object');
+        locateNextButtonIcon.classList.add('icon', 'icon--resize-to-fit');
+
+        locateNextButton.addEventListener("click", () => {
+          parent.postMessage({ pluginMessage: { type: 'locateNextNode', nodes: style.nodes } }, '*');
+        });
+
+        locateNextButtonCell.appendChild(locateNextButton);
+        tr.appendChild(locateNextButtonCell);
+
+        // Refresh button cell
+        const refreshButtonCell = document.createElement("td");
+        refreshButtonCell.classList.add('mini-icon');
+        const refreshButton = document.createElement("div");
+        const refreshButtonIcon = document.createElement('div');
+
+        refreshButton.appendChild(refreshButtonIcon);
+        refreshButton.classList.add('icon-button');
+
+        refreshButtonIcon.classList.add('icon', 'icon--reverse');
+        refreshButtonIcon.setAttribute('title', 'Refresh');
+        refreshButton.addEventListener("click", () => {
+          parent.postMessage({ pluginMessage: { type: 'refresh' } }, '*');
+        });
+
+        refreshButtonCell.appendChild(refreshButton);
+        tr.appendChild(refreshButtonCell);
+
+        // Execute Button
+        function applySelectedColorStyle(styleNodes) {
+          parent.postMessage({ pluginMessage: { type: 'applySelectedColorStyle', nodes: styleNodes, styleType: style.styleType } }, '*');
+        }
+        const executeButtonCell = document.createElement("td");
+        executeButtonCell.classList.add('mini-icon');
+        const executeButton = document.createElement("div");
+        const executeButtonIcon = document.createElement('div');
+
+        executeButton.appendChild(executeButtonIcon);
+        executeButton.classList.add('icon-button');
+        executeButton.setAttribute('title', 'Apply selected color to all objects');
+        executeButtonIcon.classList.add('icon', 'icon--play');
+
+        executeButton.addEventListener("click", () => {
+          applySelectedColorStyle(style.nodes);
+        });
+
+        executeButtonCell.appendChild(executeButton);
+        tr.appendChild(executeButtonCell);
+
+        tbody.appendChild(tr);
+
+        if (messageType === 'colorStyles') {
+          // Send nodes back to code.ts
+          const styles = pluginMessage.styles;
+          const ids = "nameTd-" + encodeURIComponent(style.name);;
+          // console.log('Preparing to send styleNodes message:', style.name, style.nodes);
+          parent.postMessage({ pluginMessage: { type: 'styleNodes', nodes: style.nodes, ids } }, '*');
+          // console.log('Sent styleNodes message:', style.name);
+        }
+      });
+
+      // Call updateLabelVisibility after populating the table body
+      switch (messageType) {
+
+        case "variables":
+          updateLabelVisibility('labelVariables', 'variables-tbody');
+          break;
+        case "colorStyles":
+          updateLabelVisibility('labelStyles', 'styles-tbody');
+          break;
+        case "fontStyles":
+          updateLabelVisibility('labelFonts', 'fonts-tbody');
+          break;
+        case "noColorStyles":
+          updateLabelVisibility('labelNoStyles', 'no-styles-tbody');
+          break;
+        case "noFontStyles":
+          updateLabelVisibility('labelNoFonts', 'no-fonts-tbody');
+          break;
       }
+    }
 
-      // Add this block inside the existing event listener
-      if (messageType === "parentingResults") {
-        const idsString = pluginMessage.ids; // assuming the ids are received as a single string
-        const ids = idsString.split(','); // replace ',' with the character used to separate the IDs
-        const parentingResults = pluginMessage.parentTotal;
-        // console.log('Received parentingResults:', parentingResults);
+    // Add this block inside the existing event listener
+    if (messageType === "parentingResults") {
+      const idsString = pluginMessage.ids; // assuming the ids are received as a single string
+      const ids = idsString.split(','); // replace ',' with the character used to separate the IDs
+      const parentingResults = pluginMessage.parentTotal;
+      // console.log('Received parentingResults:', parentingResults);
 
-        // Iterate through the ids array
-        for (let i = 0; i < ids.length; i++) {
-          // Check if the parentingResults is true
-          if (parentingResults) {
-            // Locate the nameTd cell using the id
-            const nameTd = document.getElementById(ids[i]);
+      // Iterate through the ids array
+      for (let i = 0; i < ids.length; i++) {
+        // Check if the parentingResults is true
+        if (parentingResults) {
+          // Locate the nameTd cell using the id
+          const nameTd = document.getElementById(ids[i]);
 
-            // Log the id
-            // console.log('Located id:', ids[i]);
+          // Log the id
+          // console.log('Located id:', ids[i]);
 
-            // Set the inner text to "boobs and booties"
-            if (nameTd) {
-              nameTd.innerHTML += " *";
-            }
+          // Set the inner text to "boobs and booties"
+          if (nameTd) {
+            nameTd.innerHTML += " *";
           }
         }
       }
+    }
 
-    });
+  });
 
-    unGroup.addEventListener("click", () => {
-      parent.postMessage({ pluginMessage: { type: "ungroup" } }, "*");
-    });
+  unGroup.addEventListener("click", () => {
+    parent.postMessage({ pluginMessage: { type: "ungroup" } }, "*");
+  });
 
-  </script>
+</script>
