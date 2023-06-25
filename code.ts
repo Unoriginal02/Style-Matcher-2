@@ -143,7 +143,7 @@ figma.ui.onmessage = (msg) => {
 
     function processBoundVariables(node: BaseNode, variableId: string, styleType: string) {
       const variable = figma.variables.getVariableById(variableId);
-      console.log("les variables:",variable);
+      // console.log("les variables:",variable);
 
       if (isSceneNode(node)) {
         if (variable !== null) {
@@ -310,12 +310,20 @@ const existingVariable = boundVariables.find((entry) => entry.name === variable.
       const fontStylesResults = findFontStyles(group);
 
       // Extract the results from the return objects
+      const variables = colorStylesResults.boundVariables;
       const colorStyles = colorStylesResults.colorStyles;
       const noColorStyles = colorStylesResults.noColorStyles;
       const fontStyles = fontStylesResults.fontStyles;
       const noFontStyles = fontStylesResults.noFontStyles;
-
+      
+      // console.log("Variables to send:",variables);
+      // console.log("Color styles to send:",colorStyles);
+      // console.log("No color styles to send:",noColorStyles);
+      // console.log("Font styles to send:",fontStyles);
+      // console.log("No font styles to send:",noFontStyles);
+      
       // Send the gathered color styles and font styles to the UI (ui.html)
+      figma.ui.postMessage({ type: 'variables', variables });
       figma.ui.postMessage({ type: 'colorStyles', styles: colorStyles });
       figma.ui.postMessage({ type: 'noColorStyles', styles: noColorStyles });
       figma.ui.postMessage({ type: 'fontStyles', styles: fontStyles });

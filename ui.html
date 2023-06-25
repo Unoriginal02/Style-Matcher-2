@@ -280,6 +280,13 @@
 </div>
 
 <div class="spacer">
+  <label for="variables-table" class="hiddenLabel" id="labelVariables">Color Variables</label>
+  <table id="variables-table" class="inputswithLabels">
+    <tbody id="variables-tbody"></tbody>
+  </table>
+</div>
+
+<div class="spacer">
   <label for="styles-table" class="hiddenLabel" id="labelStyles">Color Styles</label>
   <table id="styles-table" class="inputswithLabels">
     <tbody id="styles-tbody"></tbody>
@@ -356,6 +363,7 @@
       const messageType = pluginMessage.type;
 
       if (
+        messageType === "variables" ||
         messageType === "colorStyles" ||
         messageType === "fontStyles" ||
         messageType === "noColorStyles" ||
@@ -365,11 +373,14 @@
         messageType === "allFontStyles" ||
         messageType === "allNoFontStyles"
       ) {
-        // console.log(pluginMessage);
-        const styles = pluginMessage.styles;
+        console.log("message:",pluginMessage);
+        const styles = pluginMessage.styles || pluginMessage.variables
         let targetTable;
 
         switch (messageType) {
+          case "variables":
+            targetTable = "variables-tbody";
+            break;
           case "colorStyles":
             targetTable = "styles-tbody";
             break;
@@ -397,6 +408,7 @@
         }
 
         const tbody = document.getElementById(targetTable);
+        console.log("tbody:",tbody);
 
         // Clear previous table content
         tbody.innerHTML = "";
@@ -426,8 +438,8 @@
             return 0.2126 * r + 0.7152 * g + 0.0722 * b;
           }
 
-          // Only create colorCircle cells for colorStyles and noColorStyles
-          if (messageType === "colorStyles" || messageType === "noColorStyles" || messageType === "allColorStyles") {
+          // Only create colorCircle cells for colorStyles and noColorStyles and variables
+          if (messageType === "colorStyles" || messageType === "noColorStyles" || messageType === "variables" || messageType === "allColorStyles") {
             function getColorBrightness(hexColor) {
               const rgb = parseInt(hexColor.slice(1), 16);
               const r = (rgb >> 16) & 0xff;
@@ -516,7 +528,7 @@
 
           locateButton.addEventListener("click", () => {
             const messageTypeToLocate =
-              messageType === "colorStyles" || messageType === "noColorStyles"
+              messageType === "colorStyles" || messageType === "noColorStyles" || messageType === "variables"
                 ? "locateColorStyle"
                 : "locateFontStyle";
             parent.postMessage({ pluginMessage: { type: messageTypeToLocate, nodes: style.nodes } }, "*");
@@ -598,6 +610,10 @@
 
         // Call updateLabelVisibility after populating the table body
         switch (messageType) {
+
+          case "variables":
+            updateLabelVisibility('labelVariables', 'variables-tbody');
+            break;
           case "colorStyles":
             updateLabelVisibility('labelStyles', 'styles-tbody');
             break;
