@@ -31,47 +31,46 @@ figma.ui.onmessage = (msg) => {
     return styleId === figma.mixed;
   }
 
+  // Helper function to convert RGBA to hex string
+  function rgbaToHex(color: RGBA): string {
+    const r = (Math.round(color.r * 255).toString(16).length === 1 ? '0' : '') + Math.round(color.r * 255).toString(16);
+    const g = (Math.round(color.g * 255).toString(16).length === 1 ? '0' : '') + Math.round(color.g * 255).toString(16);
+    const b = (Math.round(color.b * 255).toString(16).length === 1 ? '0' : '') + Math.round(color.b * 255).toString(16);
+    return `#${r}${g}${b}`;
+  }
+
+  // Helper function to convert hex string to RGBA
+  function hexToRgba(hex: string): RGBA {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16) / 255.0,
+      g: parseInt(result[2], 16) / 255.0,
+      b: parseInt(result[3], 16) / 255.0,
+      a: 1
+    } : { r: 0, g: 0, b: 0, a: 1 };
+  }
+
+  // Helper function to check if an object is of type RGBA
+  function isRgba(obj: any): obj is RGBA {
+    return obj && typeof obj.r === 'number' && typeof obj.g === 'number' && typeof obj.b === 'number' && typeof obj.a === 'number';
+  }
+
+  function isSceneNode(node: BaseNode): node is SceneNode {
+    return "parent" in node;
+  }
+
   // This function traverses a FrameNode and identifies nodes with applied color styles and nodes without
-  function findColorStyles(group: FrameNode): { colorStyles: { name: string; nodes: any[]; isRemote: boolean; styleType: string }[]; noColorStyles: { name: string; nodes: string[]; styleType: string }[] } {
+  function findColorStyles(group: FrameNode): { colorStyles: { name: string; nodes: any[]; isRemote: boolean; styleType: string }[]; noColorStyles: { name: string; nodes: any[]; styleType: string }[]; boundVariables: { name: string; hexColor: string; nodes: any[]; styleType: string }[]; } {
+
 
     // Initialize arrays to hold nodes with and without color styles
     const colorStyles: { name: string; hexColor: string; nodes: any[]; isRemote: boolean; styleType: string }[] = [];
     const noColorStyles: { name: string; hexColor: string; nodes: any[]; styleType: string }[] = [];
+    const boundVariables: { name: string; hexColor: string; nodes: any[]; isRemote: boolean; styleType: string }[] = [];
 
     // Type guard to check if styleId is a string
     function isStyleIdString(styleId: string | typeof figma.mixed): styleId is string {
       return typeof styleId === "string";
-    }
-
-    // Helper function to convert RGBA to hex string
-    function rgbaToHex(color: RGBA): string {
-      const r = (Math.round(color.r * 255).toString(16).length === 1 ? '0' : '') + Math.round(color.r * 255).toString(16);
-      const g = (Math.round(color.g * 255).toString(16).length === 1 ? '0' : '') + Math.round(color.g * 255).toString(16);
-      const b = (Math.round(color.b * 255).toString(16).length === 1 ? '0' : '') + Math.round(color.b * 255).toString(16);
-      return `#${r}${g}${b}`;
-    }
-
-    // Function to process color styles - adds nodes to either colorStyles or noColorStyles array
-    function processColorStyles(node: BaseNode, color: RGBA, styleId: string | null, styleType: string) {
-      const hexColor = rgbaToHex(color);
-      if (styleId && typeof styleId === "string") {
-        const paintStyle = figma.getStyleById(styleId);
-        if (paintStyle) {
-          const existingStyle = colorStyles.find((style) => style.name === paintStyle.name && style.styleType === styleType);
-          if (existingStyle) {
-            existingStyle.nodes.push(getNodeToAppend(node));
-          } else {
-            colorStyles.push({ name: paintStyle.name, hexColor, nodes: [getNodeToAppend(node)], isRemote: paintStyle.remote, styleType });
-          }
-        }
-      } else {
-        const existingStyle = noColorStyles.find((style) => style.name === hexColor && style.styleType === styleType);
-        if (existingStyle) {
-          existingStyle.nodes.push(getNodeToAppend(node));
-        } else {
-          noColorStyles.push({ name: hexColor, hexColor, nodes: [getNodeToAppend(node)], styleType });
-        }
-      }
     }
 
     // Recursive function to search for color styles in the children of a node
@@ -91,6 +90,25 @@ figma.ui.onmessage = (msg) => {
           }
         }
 
+        if ('boundVariables' in node) {
+          if (node.boundVariables?.['fills']) {
+            // Process bound variables for fills
+            node.boundVariables?.['fills'].forEach(variableAlias => {
+              const fillVariableId = variableAlias.id;
+              processBoundVariables(node, fillVariableId, "fill");
+            });
+          }
+
+          if (node.boundVariables?.['strokes']) {
+            // Process bound variables for strokes
+            node.boundVariables?.['strokes'].forEach(variableAlias => {
+              const fillVariableId = variableAlias.id;
+              processBoundVariables(node, fillVariableId, "stroke");
+            });
+          }
+
+        }
+
         if ("children" in node) {
           for (const child of node.children) {
             searchColorStyles(child);
@@ -99,11 +117,76 @@ figma.ui.onmessage = (msg) => {
       }
     }
 
+    // Function to process color styles - adds nodes to either colorStyles or noColorStyles array
+    function processColorStyles(node: BaseNode, color: RGBA, styleId: string | null, styleType: string) {
+      const hexColor = rgbaToHex(color);
+      if (styleId && typeof styleId === "string") {
+        const paintStyle = figma.getStyleById(styleId);
+
+        if (paintStyle) {
+          const existingStyle = colorStyles.find((style) => style.name === paintStyle.name && style.styleType === styleType);
+          if (existingStyle) {
+            existingStyle.nodes.push(getNodeToAppend(node));
+          } else {
+            colorStyles.push({ name: paintStyle.name, hexColor, nodes: [getNodeToAppend(node)], isRemote: paintStyle.remote, styleType });
+          }
+        }
+      } else {
+        const existingStyle = noColorStyles.find((style) => style.name === hexColor && style.styleType === styleType);
+        if (existingStyle) {
+          existingStyle.nodes.push(getNodeToAppend(node));
+        } else {
+          noColorStyles.push({ name: hexColor, hexColor, nodes: [getNodeToAppend(node)], styleType });
+        }
+      }
+    }
+
+    function processBoundVariables(node: BaseNode, variableId: string, styleType: string) {
+      const variable = figma.variables.getVariableById(variableId);
+      console.log("les variables:",variable);
+
+      if (isSceneNode(node)) {
+        if (variable !== null) {
+          const variableValue = variable.resolveForConsumer(node).value;
+
+          let rgbaColor: RGBA;
+
+          if (typeof variableValue === 'string') {
+            // Convert the hex string to an RGBA object
+            rgbaColor = hexToRgba(variableValue);
+          } else if (isRgba(variableValue)) {
+            rgbaColor = variableValue;
+          } else {
+            throw new Error('Unsupported color format');
+          }
+
+          const hexColor = rgbaToHex(rgbaColor);
+
+const existingVariable = boundVariables.find((entry) => entry.name === variable.name && entry.styleType === styleType);
+    if (existingVariable) {
+        existingVariable.nodes.push(getNodeToAppend(node));
+    } else {
+        boundVariables.push({ name: variable.name, hexColor, nodes: [getNodeToAppend(node)], isRemote: variable.remote, styleType });
+    }
+
+        } else { 
+          console.log('Variable is null');
+        }
+      } else {
+        console.log('Node is not a SceneNode');
+      }
+
+
+    }
+
     // Start the color style search in the group
     searchColorStyles(group);
-
+    // console.log("boundVariables:",boundVariables);
+    // console.log("colorStyles:",colorStyles);
+    // console.log("noColorStyles:",noColorStyles);
+    
     // Return the results - color styles and no color styles
-    return { colorStyles, noColorStyles };
+    return { colorStyles, noColorStyles, boundVariables };
   }
 
   // This function traverses a FrameNode and identifies nodes with applied font styles and nodes without
