@@ -276,7 +276,7 @@
   <button id="get-styles" class="button button--primary-j">Get Styles</button>
   <button id="refresh-button" class="button button--secondary-j">Refresh</button>
   <button id="ungroup-button" class="button button--secondary-j">Ungroup</button>
-  <button id="get-all-styles" class="button button--secondary-j">Get All Styles</button>
+  <!-- <button id="get-all-styles" class="button button--secondary-j">Get All Styles</button> -->
 </div>
 
 <div class="spacer">
@@ -318,7 +318,7 @@
   <script>
     console.clear();
     const getStylesButton = document.getElementById('get-styles');
-    const getAllStylesButton = document.getElementById('get-all-styles');
+    // const getAllStylesButton = document.getElementById('get-all-styles');
     const unGroup = document.getElementById('ungroup-button');
     const refresh = document.getElementById('refresh-button');
 
@@ -326,9 +326,9 @@
       parent.postMessage({ pluginMessage: { type: 'getStyles' } }, '*');
     };
 
-    getAllStylesButton.onclick = () => {
-      parent.postMessage({ pluginMessage: { type: 'getAllStyles' } }, '*');
-    };
+    // getAllStylesButton.onclick = () => {
+    //   parent.postMessage({ pluginMessage: { type: 'getAllStyles' } }, '*');
+    // };
 
     refresh.onclick = () => {
       parent.postMessage({ pluginMessage: { type: 'refresh' } }, '*');

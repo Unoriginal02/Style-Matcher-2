@@ -345,6 +345,145 @@ figma.ui.onmessage = (msg) => {
     }
   }
 
-  
+  // Refresh
+  if (msg.type === 'refresh') {
+    const groupName = "Matcher Workbench";
+    const group = figma.currentPage.findOne(node => node.type === 'FRAME' && node.name === groupName) as FrameNode;
+
+    if (group) {
+      const colorStylesResults = findColorStyles(group);
+      const fontStylesResults = findFontStyles(group);
+
+      const variables = colorStylesResults.boundVariables;
+      const colorStyles = colorStylesResults.colorStyles;
+      const noColorStyles = colorStylesResults.noColorStyles;
+      const fontStyles = fontStylesResults.fontStyles;
+      const noFontStyles = fontStylesResults.noFontStyles;
+
+      // Send the gathered color styles and font styles to the UI (ui.html)
+      figma.ui.postMessage({ type: 'variables', variables });
+      figma.ui.postMessage({ type: 'colorStyles', styles: colorStyles });
+      figma.ui.postMessage({ type: 'noColorStyles', styles: noColorStyles });
+      figma.ui.postMessage({ type: 'fontStyles', styles: fontStyles });
+      figma.ui.postMessage({ type: 'noFontStyles', styles: noFontStyles });
+
+      figma.notify('Styles refreshed!');
+    } else {
+      figma.notify('Matcher Workbench not found.');
+    }
+  }
+
+  // Locate Object
+  if (msg.type === "locateColorStyle" || msg.type === "locateFontStyle") {
+    const nodes = msg.nodes;
+    const nodesToSelect = nodes
+      .map((node: any) => figma.getNodeById(node.id))
+      .filter((node: BaseNode | null) => node !== null) as SceneNode[];
+
+    if (nodesToSelect.length > 0) {
+      figma.currentPage.selection = nodesToSelect;
+      figma.viewport.scrollAndZoomIntoView(nodesToSelect);
+      figma.notify(`${nodesToSelect.length} node(s) selected`);
+    }
+  }
+
+  // Locate the next node
+  if (msg.type === "locateNextNode") {
+    const nodes = msg.nodes;
+    const nodesArray = nodes
+      .map((node: any) => figma.getNodeById(node.id))
+      .filter((node: BaseNode | null) => node !== null) as SceneNode[];
+
+    if (nodesArray.length > 0) {
+      // Increment the currentNodeIndex, and wrap around if it exceeds the array length
+      currentNodeIndex = (currentNodeIndex + 1) % nodesArray.length;
+
+      // Select the next node
+      const nextNode = nodesArray[currentNodeIndex];
+      figma.currentPage.selection = [nextNode];
+      figma.viewport.scrollAndZoomIntoView([nextNode]);
+      // figma.notify(`Selected node ${currentNodeIndex + 1} of ${nodesArray.length}`);
+    }
+  }
+
+  // Ungroup
+  if (msg.type === 'ungroup') {
+    const groupName = "Matcher Workbench";
+    const group = figma.currentPage.findOne(node => node.type === 'FRAME' && node.name === groupName) as FrameNode;
+
+    if (group) {
+      const parent = group.parent;
+      if (parent) {
+        let currentY = group.y;
+
+        for (const child of group.children) {
+          parent.appendChild(child);
+          child.x = group.x;
+          child.y = currentY;
+          currentY += child.height + 32; // Add 32px vertical separation
+        }
+        group.remove();
+        figma.notify('Ungrouped successfully!');
+      } else {
+        figma.notify('Unable to ungroup. Group has no parent.');
+      }
+    } else {
+      figma.notify('Matcher Workbench not found.');
+    }
+  }
+
+  // Check if a node is a descendant of another node
+  function isDescendant(parent: BaseNode, child: BaseNode): boolean {
+    let currentNode = child.parent;
+    while (currentNode !== null) {
+      if (currentNode === parent) {
+        return true;
+      }
+      currentNode = currentNode.parent;
+    }
+    return false;
+  }
+
+  // StyleNodes
+  if (msg.type === 'styleNodes') {
+    const nodes = msg.nodes;
+    const ids = msg.ids;
+    // console.log('Received nodes:', nodes, ids);
+
+    // Check if nodeA is a descendant of nodeB
+    function isDescendant(nodeA: BaseNode, nodeB: BaseNode): boolean {
+      let currentNode = nodeA.parent;
+      while (currentNode !== null) {
+        if (currentNode === nodeB) {
+          return true;
+        }
+        currentNode = currentNode.parent;
+      }
+      return false;
+    }
+
+    // Get parenting results for each node
+    const parentingResults = nodes.map((nodeA: any) => {
+      return nodes.some((nodeB: any) => {
+        if (nodeA.id !== nodeB.id) {
+          const nodeAObj = figma.getNodeById(nodeA.id);
+          const nodeBObj = figma.getNodeById(nodeB.id);
+          if (nodeAObj && nodeBObj) {
+            return isDescendant(nodeAObj, nodeBObj);
+          }
+        }
+        return false;
+      });
+    });
+
+    // Calculate parentTotal based on parentingResults
+    const parentTotal = parentingResults.some((result: boolean) => result === true);
+    // console.log('parentTotal'+parentTotal);
+
+
+    // Send the parenting results and parentTotal back with the ids
+    figma.ui.postMessage({ type: 'parentingResults', ids: ids, parentTotal: parentTotal });
+  }
+
   // This is the end
 }
