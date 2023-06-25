@@ -59,6 +59,7 @@ figma.ui.onmessage = (msg) => {
     return "parent" in node;
   }
 
+
   // This function traverses a FrameNode and identifies nodes with applied color styles and nodes without
   function findColorStyles(group: FrameNode): { colorStyles: { name: string; nodes: any[]; isRemote: boolean; styleType: string }[]; noColorStyles: { name: string; nodes: any[]; styleType: string }[]; boundVariables: { name: string; hexColor: string; nodes: any[]; styleType: string }[]; } {
 
@@ -79,34 +80,31 @@ figma.ui.onmessage = (msg) => {
         if ("fills" in node && Array.isArray(node.fills) && node.fills.length > 0) {
           const fill = node.fills[0];
           if (fill.type === "SOLID") {
-            processColorStyles(node, fill.color, isStyleIdString(node.fillStyleId) ? node.fillStyleId : null, "fill");
+            if (node.boundVariables?.['fills']) {
+              // Process bound variables for fills
+              node.boundVariables?.['fills'].forEach(variableAlias => {
+                const fillVariableId = variableAlias.id;
+                processBoundVariables(node, fillVariableId, "fill");
+              });
+            } else {
+              processColorStyles(node, fill.color, isStyleIdString(node.fillStyleId) ? node.fillStyleId : null, "fill");
+            }
           }
         }
 
         if ("strokes" in node && Array.isArray(node.strokes) && node.strokes.length > 0) {
           const stroke = node.strokes[0];
           if (stroke.type === "SOLID") {
-            processColorStyles(node, stroke.color, isStyleIdString(node.strokeStyleId) ? node.strokeStyleId : null, "stroke");
+            if (node.boundVariables?.['strokes']) {
+              // Process bound variables for strokes
+              node.boundVariables?.['strokes'].forEach(variableAlias => {
+                const fillVariableId = variableAlias.id;
+                processBoundVariables(node, fillVariableId, "stroke");
+              });
+            } else {
+              processColorStyles(node, stroke.color, isStyleIdString(node.strokeStyleId) ? node.strokeStyleId : null, "stroke");
+            }
           }
-        }
-
-        if ('boundVariables' in node) {
-          if (node.boundVariables?.['fills']) {
-            // Process bound variables for fills
-            node.boundVariables?.['fills'].forEach(variableAlias => {
-              const fillVariableId = variableAlias.id;
-              processBoundVariables(node, fillVariableId, "fill");
-            });
-          }
-
-          if (node.boundVariables?.['strokes']) {
-            // Process bound variables for strokes
-            node.boundVariables?.['strokes'].forEach(variableAlias => {
-              const fillVariableId = variableAlias.id;
-              processBoundVariables(node, fillVariableId, "stroke");
-            });
-          }
-
         }
 
         if ("children" in node) {
@@ -162,14 +160,14 @@ figma.ui.onmessage = (msg) => {
 
           const hexColor = rgbaToHex(rgbaColor);
 
-const existingVariable = boundVariables.find((entry) => entry.name === variable.name && entry.styleType === styleType);
-    if (existingVariable) {
-        existingVariable.nodes.push(getNodeToAppend(node));
-    } else {
-        boundVariables.push({ name: variable.name, hexColor, nodes: [getNodeToAppend(node)], isRemote: variable.remote, styleType });
-    }
+          const existingVariable = boundVariables.find((entry) => entry.name === variable.name && entry.styleType === styleType);
+          if (existingVariable) {
+            existingVariable.nodes.push(getNodeToAppend(node));
+          } else {
+            boundVariables.push({ name: variable.name, hexColor, nodes: [getNodeToAppend(node)], isRemote: variable.remote, styleType });
+          }
 
-        } else { 
+        } else {
           console.log('Variable is null');
         }
       } else {
@@ -184,9 +182,18 @@ const existingVariable = boundVariables.find((entry) => entry.name === variable.
     // console.log("boundVariables:",boundVariables);
     // console.log("colorStyles:",colorStyles);
     // console.log("noColorStyles:",noColorStyles);
-    
+
     // Return the results - color styles and no color styles
-    return { colorStyles, noColorStyles, boundVariables };
+
+    // Filter the noColorStyles array to exclude styles that exist in the boundVariables array
+    const filteredNoColorStyles = noColorStyles.filter(noColorStyle => {
+      return !boundVariables.some(boundVariable => {
+        return boundVariable.name === noColorStyle.name && boundVariable.styleType === noColorStyle.styleType;
+      });
+    });
+
+    return { colorStyles, noColorStyles: filteredNoColorStyles, boundVariables };
+
   }
 
   // This function traverses a FrameNode and identifies nodes with applied font styles and nodes without
@@ -315,13 +322,13 @@ const existingVariable = boundVariables.find((entry) => entry.name === variable.
       const noColorStyles = colorStylesResults.noColorStyles;
       const fontStyles = fontStylesResults.fontStyles;
       const noFontStyles = fontStylesResults.noFontStyles;
-      
+
       // console.log("Variables to send:",variables);
       // console.log("Color styles to send:",colorStyles);
       // console.log("No color styles to send:",noColorStyles);
       // console.log("Font styles to send:",fontStyles);
       // console.log("No font styles to send:",noFontStyles);
-      
+
       // Send the gathered color styles and font styles to the UI (ui.html)
       figma.ui.postMessage({ type: 'variables', variables });
       figma.ui.postMessage({ type: 'colorStyles', styles: colorStyles });
@@ -337,5 +344,7 @@ const existingVariable = boundVariables.find((entry) => entry.name === variable.
       figma.notify('Please select something.');
     }
   }
+
+  
   // This is the end
 }

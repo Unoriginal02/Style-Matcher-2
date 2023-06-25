@@ -455,7 +455,7 @@
             colorCircle.classList.add('le-dot');
             colorCircle.style.width = "16px";
             colorCircle.style.height = "16px";
-            colorCircle.style.borderRadius = "50%";
+            colorCircle.style.borderRadius = messageType === "variables" ? "0" : "50%";
             colorCircle.style.backgroundColor = style.hexColor;
 
             // Add a light gray border if the color is too light or clear
