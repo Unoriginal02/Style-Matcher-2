@@ -343,8 +343,8 @@
   };
 
   getAllStylesButton.onclick = () => {
-      parent.postMessage({ pluginMessage: { type: 'getAllStyles' } }, '*');
-    };
+    parent.postMessage({ pluginMessage: { type: 'getAllStyles' } }, '*');
+  };
 
   refresh.onclick = () => {
     parent.postMessage({ pluginMessage: { type: 'refresh' } }, '*');
@@ -486,6 +486,7 @@
 
         // Name cell
         const nameTd = document.createElement("td");
+        const modeTd = document.createElement("td");
 
         nameTd.addEventListener('click', () => {
           copyToClipboard(nameTd.innerText);
@@ -498,6 +499,15 @@
         nameTd.id = "nameTd-" + encodeURIComponent(style.name);
         nameTd.classList.add("dataCell", "nameCell", "styleRowName");
         tr.appendChild(nameTd);
+
+        // Mode cell
+        if (style.modeName == null || style.modeName === "") {
+          modeTd.innerText = "-";
+        } else {
+          modeTd.innerText = style.modeName;
+        }
+        modeTd.classList.add("mini", "remoteStatusCell");
+        tr.appendChild(modeTd);
 
         // New cell to display "Fill" or "Stroke"
         if (style.styleType === 'fill') {

@@ -1,4 +1,4 @@
-figma.showUI(__html__, { width: 640, height: 600 });
+figma.showUI(__html__, { width: 768, height: 600 });
 
 //Parent Counter
 function getNodeToAppend(node: any): any {
@@ -61,13 +61,13 @@ figma.ui.onmessage = (msg) => {
 
 
   // This function traverses a FrameNode and identifies nodes with applied color styles and nodes without
-  function findColorStyles(group: FrameNode, msg: string): { colorStyles: { name: string; nodes: any[]; isRemote: boolean; styleType: string }[]; noColorStyles: { name: string; nodes: any[]; styleType: string }[]; boundVariables: { name: string; hexColor: string; nodes: any[]; styleType: string }[]; } {
+  function findColorStyles(group: FrameNode, msg: string): { colorStyles: { name: string; nodes: any[]; isRemote: boolean; styleType: string }[]; noColorStyles: { name: string; nodes: any[]; styleType: string }[]; boundVariables: { name: string; hexColor: string; nodes: any[]; styleType: string;  modeName: string  }[]; } {
     console.log("findColorStyles recieved:", msg);
 
     // Initialize arrays to hold nodes with and without color styles
     const colorStyles: { name: string; hexColor: string; nodes: any[]; isRemote: boolean; styleType: string }[] = [];
     const noColorStyles: { name: string; hexColor: string; nodes: any[]; styleType: string }[] = [];
-    const boundVariables: { name: string; hexColor: string; nodes: any[]; isRemote: boolean; styleType: string }[] = [];
+    const boundVariables: { name: string; hexColor: string; nodes: any[]; isRemote: boolean; styleType: string;  modeName: string }[] = [];
     const visitedNodes = new Set<string>();
 
     // Type guard to check if styleId is a string
@@ -192,13 +192,13 @@ figma.ui.onmessage = (msg) => {
 
     function processBoundVariables(node: BaseNode, variableId: string, styleType: string) {
       const variable = figma.variables.getVariableById(variableId);
-
+    
       if (isSceneNode(node)) {
         if (variable !== null) {
           const variableValue = variable.resolveForConsumer(node).value;
-
+    
           let rgbaColor: RGBA;
-
+    
           if (typeof variableValue === 'string') {
             rgbaColor = hexToRgba(variableValue);
           } else if (isRgba(variableValue)) {
@@ -206,9 +206,37 @@ figma.ui.onmessage = (msg) => {
           } else {
             throw new Error('Unsupported color format');
           }
-
+    
           const hexColor = rgbaToHex(rgbaColor);
-
+    
+          let modeName = '';
+    
+          // Log the variable collection IDs and their corresponding modes
+          if ("explicitVariableModes" in node) {
+            const explicitVariableModes = node.explicitVariableModes;
+            for (const variableCollectionId in explicitVariableModes) {
+              const modeId = explicitVariableModes[variableCollectionId];
+    
+              // Get the VariableCollection object
+              const variableCollection = figma.variables.getVariableCollectionById(variableCollectionId);
+    
+              // Null check for variableCollection
+              if (variableCollection) {
+                // Find the mode with the matching ID
+                const mode = variableCollection.modes.find(m => m.modeId === modeId);
+    
+                if (mode) {
+                  modeName = mode.name;
+                  console.log(`Variable Collection ID: ${variableCollectionId}, Mode ID: ${modeId}, Mode Name: ${mode.name}`);
+                } else {
+                  console.log(`Variable Collection ID: ${variableCollectionId}, Mode ID: ${modeId}, Mode Name: Not found`);
+                }
+              } else {
+                console.log(`Variable Collection with ID ${variableCollectionId} is null`);
+              }
+            }
+          }
+    
           const existingVariable = boundVariables.find(
             (entry) =>
               entry.name === variable.name &&
@@ -224,9 +252,11 @@ figma.ui.onmessage = (msg) => {
               nodes: [getNodeToAppend(node)],
               isRemote: variable.remote,
               styleType,
+              modeName // Adding modeName to the array
             });
-          }
 
+          }
+    
         } else {
           console.log('Variable is null');
         }
@@ -234,8 +264,7 @@ figma.ui.onmessage = (msg) => {
         console.log('Node is not a SceneNode');
       }
     }
-
-
+    
 
     // Start the color style search in the group
     if (msg === "getStyles" || msg === "refresh") {
