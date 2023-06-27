@@ -276,7 +276,7 @@
   <button id="get-styles" class="button button--primary-j">Get Styles</button>
   <button id="refresh-button" class="button button--secondary-j">Refresh</button>
   <button id="ungroup-button" class="button button--secondary-j">Ungroup</button>
-  <!-- <button id="get-all-styles" class="button button--secondary-j">Get All Styles</button> -->
+  <button id="get-all-styles" class="button button--secondary-j">Get All Styles</button>
 </div>
 
 <div class="spacer">
@@ -334,12 +334,17 @@
   }
 
   const getStylesButton = document.getElementById('get-styles');
+  const getAllStylesButton = document.getElementById('get-all-styles');
   const unGroup = document.getElementById('ungroup-button');
   const refresh = document.getElementById('refresh-button');
 
   getStylesButton.onclick = () => {
     parent.postMessage({ pluginMessage: { type: 'getStyles' } }, '*');
   };
+
+  getAllStylesButton.onclick = () => {
+      parent.postMessage({ pluginMessage: { type: 'getAllStyles' } }, '*');
+    };
 
   refresh.onclick = () => {
     parent.postMessage({ pluginMessage: { type: 'refresh' } }, '*');
@@ -384,7 +389,7 @@
       messageType === "allFontStyles" ||
       messageType === "allNoFontStyles"
     ) {
-      console.log("message:", pluginMessage);
+      // console.log("message:", pluginMessage);
       const styles = pluginMessage.styles || pluginMessage.variables
       let targetTable;
 
@@ -419,7 +424,7 @@
       }
 
       const tbody = document.getElementById(targetTable);
-      console.log("tbody:", tbody);
+      // console.log("tbody:", tbody);
 
       // Clear previous table content
       tbody.innerHTML = "";
