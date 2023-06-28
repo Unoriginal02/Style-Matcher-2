@@ -442,6 +442,10 @@
         return b.name.localeCompare(a.name);
       });
 
+
+
+      let tableRowInfoArray = [];
+
       // Add table rows with the style name and the "locate" button
       styles.forEach((style) => {
         const tr = document.createElement("tr");
@@ -627,7 +631,15 @@
         executeButtonCell.appendChild(executeButton);
         tr.appendChild(executeButtonCell);
 
-        tbody.appendChild(tr);
+        // Make an object with all the necessary info for creating the table rows
+        const tableRowInfo = {
+          tr,
+          modeName: style.modeName || "",  // use empty string if modeName is null or undefined
+          // Include any other properties that might be needed for sorting
+        };
+
+        // Push the object into an array
+        tableRowInfoArray.push(tableRowInfo);
 
         if (messageType === 'colorStyles') {
           // Send nodes back to code.ts
@@ -639,6 +651,14 @@
         }
       });
 
+      // Sort the array based on the modeName property
+      tableRowInfoArray.sort((a, b) => a.modeName.localeCompare(b.modeName));
+
+      // Append the sorted rows to the table body
+      tableRowInfoArray.forEach(({ tr }) => {
+        tbody.appendChild(tr);
+      });
+      
       // Call updateLabelVisibility after populating the table body
       switch (messageType) {
 
