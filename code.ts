@@ -62,7 +62,7 @@ figma.ui.onmessage = (msg) => {
 
   // This function traverses a FrameNode and identifies nodes with applied color styles and nodes without
   function findColorStyles(group: FrameNode, msg: string): { colorStyles: { name: string; nodes: any[]; isRemote: boolean; styleType: string }[]; noColorStyles: { name: string; nodes: any[]; styleType: string }[]; boundVariables: { name: string; hexColor: string; nodes: any[]; styleType: string; modeName: string; hasParentMode: boolean }[]; } {
-    console.log("findColorStyles recieved:", msg);
+    // console.log("findColorStyles recieved:", msg);
 
     // Initialize arrays to hold nodes with and without color styles
     const colorStyles: { name: string; hexColor: string; nodes: any[]; isRemote: boolean; styleType: string }[] = [];
@@ -117,11 +117,13 @@ figma.ui.onmessage = (msg) => {
     }
 
     function searchAllColorStyles(node: SceneNode): void {
-      console.log("GetAllStyles function message triggered");
-      // Skip processing hidden nodes
-      if (!node.visible) {
-        return;
-      }
+      // console.log("GetAllStyles function message triggered");
+
+      // Skip processing hidden nodes (Uncomment to activate)
+      // if (!node.visible) {
+      //   return;
+      // }
+
       // console.log('Processing node:', node.id, node.type);
       if (visitedNodes.has(node.id)) {
         // console.log('Skipping node:', node.id);
@@ -169,9 +171,10 @@ figma.ui.onmessage = (msg) => {
     // Function to process color styles - adds nodes to either colorStyles or noColorStyles array
     function processColorStyles(node: BaseNode, color: RGBA, styleId: string | null, styleType: string) {
       const hexColor = rgbaToHex(color);
+      
       if (styleId && typeof styleId === "string") {
         const paintStyle = figma.getStyleById(styleId);
-
+    
         if (paintStyle) {
           const existingStyle = colorStyles.find((style) => style.name === paintStyle.name && style.styleType === styleType);
           if (existingStyle) {
@@ -189,7 +192,7 @@ figma.ui.onmessage = (msg) => {
         }
       }
     }
-
+    
     function findParentModeName(node: BaseNode): string | null {
       if (node.parent && node.parent.name !== "Matcher Workbench") {
         const parent = node.parent;
@@ -222,12 +225,12 @@ figma.ui.onmessage = (msg) => {
 
     function processBoundVariables(node: BaseNode, variableId: string, styleType: string) {
       const variable = figma.variables.getVariableById(variableId);
-      
+
 
       if (isSceneNode(node)) {
         if (variable !== null) {
           const variableValue = variable.resolveForConsumer(node).value;
-          
+
 
           let rgbaColor: RGBA;
 
@@ -245,7 +248,7 @@ figma.ui.onmessage = (msg) => {
 
           if (modeName === '') {
             modeName = findParentModeName(node) || '';
-          }        
+          }
 
           // Log the variable collection IDs and their corresponding modes
           if ("explicitVariableModes" in node) {
@@ -263,12 +266,12 @@ figma.ui.onmessage = (msg) => {
 
                 if (mode) {
                   modeName = mode.name;
-                  console.log(`Variable Collection ID: ${variableCollectionId}, Mode ID: ${modeId}, Mode Name: ${mode.name}`);
+                  // console.log(`Variable Collection ID: ${variableCollectionId}, Mode ID: ${modeId}, Mode Name: ${mode.name}`);
                 } else {
-                  console.log(`Variable Collection ID: ${variableCollectionId}, Mode ID: ${modeId}, Mode Name: Not found`);
+                  // console.log(`Variable Collection ID: ${variableCollectionId}, Mode ID: ${modeId}, Mode Name: Not found`);
                 }
               } else {
-                console.log(`Variable Collection with ID ${variableCollectionId} is null`);
+                // console.log(`Variable Collection with ID ${variableCollectionId} is null`);
               }
             }
           }
@@ -295,10 +298,10 @@ figma.ui.onmessage = (msg) => {
           }
 
         } else {
-          console.log('Variable is null');
+          // console.log('Variable is null');
         }
       } else {
-        console.log('Node is not a SceneNode');
+        // console.log('Node is not a SceneNode');
       }
     }
 
@@ -322,7 +325,7 @@ figma.ui.onmessage = (msg) => {
       });
     });
 
-    console.log("Find colors results:", colorStyles, filteredNoColorStyles, boundVariables);
+    // console.log("Find colors results:", colorStyles, filteredNoColorStyles, boundVariables);
 
     return { colorStyles, noColorStyles: filteredNoColorStyles, boundVariables };
 
@@ -330,7 +333,7 @@ figma.ui.onmessage = (msg) => {
 
   // This function traverses a FrameNode and identifies nodes with applied font styles and nodes without
   function findFontStyles(group: FrameNode, msg: string): { fontStyles: { name: string; nodes: any[] }[]; noFontStyles: { name: string; nodes: any[] }[] } {
-    console.log("findFontStyles messages received:", msg);
+    // console.log("findFontStyles messages received:", msg);
     // Initialize arrays to hold nodes with and without font styles
     const fontStyles: { name: string; nodes: any[]; isRemote: boolean }[] = [];
     const noFontStyles: { name: string; nodes: any[] }[] = [];
@@ -386,7 +389,7 @@ figma.ui.onmessage = (msg) => {
 
     // Recursive function to search for font styles in the children of a node
     function searchAllFontStyles(node: BaseNode): void {
-      console.log("searchAllFontStyles function triggered");
+      // console.log("searchAllFontStyles function triggered");
 
       if (
         node.type === "TEXT" &&
@@ -436,7 +439,7 @@ figma.ui.onmessage = (msg) => {
       searchAllFontStyles(group);
     }
 
-    console.log("fontStyles result:", fontStyles, noFontStyles);
+    // console.log("fontStyles result:", fontStyles, noFontStyles);
 
     // Return the results - font styles and no font styles
     return { fontStyles, noFontStyles };
